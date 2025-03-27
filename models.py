@@ -32,7 +32,7 @@ class ProcessManager(IProcessManager):
         processState = StateProcess(process, arriveTime)
         self.processStates.append(processState)
         
-    def run(self):
+    def runSerie(self):
         self.currentTime = 0
         self.processStates.sort(key=lambda x: x.arriveTime)
         

@@ -28,7 +28,7 @@ class IProcessManager(ABC):
         pass
 
     @abstractmethod
-    def run(self):
+    def runSerie(self):
         pass
 
     @abstractmethod

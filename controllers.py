@@ -15,6 +15,7 @@ class SerieProcessingController(ISerieProcessingController):
         pid = self.__serieView.pid_entry.get()
         arriveTime = self.__serieView.arriveTimeEntry.get()
         burstTime = self.__serieView.burstTimeEntry.get()
+        
         if not pid.strip():
             self.__serieView.showErrorMessage("El campo PID no puede estar vacío.")
             return
@@ -37,7 +38,7 @@ class SerieProcessingController(ISerieProcessingController):
         
         if arriveTime:
             self.processManager.addProcess(int(pid), int(arriveTime), int(burstTime))
-            self.processManager.run()
+            self.processManager.runSerie()
             self.__serieView.cleanRows()
             self.__serieView.addTableValues(self.processManager.processStates)
             self.__serieView.cleanInputs()
