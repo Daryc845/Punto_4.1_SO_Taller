@@ -167,3 +167,93 @@ class SerieProcessingView(ISerieProcessingView):
     def addTableValues(self, processStates):
         for state in processStates:
             self.table.insert("", "end", values=state.getValues())
+
+class BatchProcessingView(tk.Frame):
+    def __init__(self, master, controller):
+        super().__init__(master)
+        self.controller = controller
+        self.pack()  # Asegura que el frame se muestre en la ventana principal
+
+        # Etiqueta y entrada para el ID del lote
+        self.batch_id_label = tk.Label(self, text="Batch ID:")
+        self.batch_id_label.grid(row=0, column=0, padx=5, pady=5)
+        self.batch_id_entry = tk.Entry(self)
+        self.batch_id_entry.grid(row=0, column=1, padx=5, pady=5)
+
+        # Etiqueta y entrada para el PID
+        self.pid_label = tk.Label(self, text="PID:")
+        self.pid_label.grid(row=1, column=0, padx=5, pady=5)
+        self.pid_entry = tk.Entry(self)
+        self.pid_entry.grid(row=1, column=1, padx=5, pady=5)
+
+        # Etiqueta y entrada para el tiempo de llegada
+        self.arrive_time_label = tk.Label(self, text="Arrive Time:")
+        self.arrive_time_label.grid(row=2, column=0, padx=5, pady=5)
+        self.arrive_time_entry = tk.Entry(self)
+        self.arrive_time_entry.grid(row=2, column=1, padx=5, pady=5)
+
+        # Etiqueta y entrada para el tiempo de ráfaga
+        self.burst_time_label = tk.Label(self, text="Burst Time:")
+        self.burst_time_label.grid(row=3, column=0, padx=5, pady=5)
+        self.burst_time_entry = tk.Entry(self)
+        self.burst_time_entry.grid(row=3, column=1, padx=5, pady=5)
+
+        # Botón para agregar un proceso al lote
+        self.add_process_button = tk.Button(self, text="Add Process to Batch", command=self.add_process_to_batch)
+        self.add_process_button.grid(row=4, column=0, columnspan=2, pady=10)
+
+        # Botón para ejecutar los lotes
+        self.execute_batches_button = tk.Button(self, text="Execute Batches", command=self.execute_batches)
+        self.execute_batches_button.grid(row=5, column=0, columnspan=2, pady=10)
+
+        # Tabla para mostrar los procesos en los lotes
+        self.batch_table = ttk.Treeview(self, columns=("Batch ID", "PID", "Arrive Time", "Burst Time"), show="headings")
+        self.batch_table.heading("Batch ID", text="Batch ID")
+        self.batch_table.heading("PID", text="PID")
+        self.batch_table.heading("Arrive Time", text="Arrive Time")
+        self.batch_table.heading("Burst Time", text="Burst Time")
+        self.batch_table.grid(row=6, column=0, columnspan=2, pady=10)
+
+        # Tabla para mostrar los resultados de la ejecución
+        self.execution_table = ttk.Treeview(self, columns=("Batch ID", "PID", "Start Time", "Finish Time", "Turnaround Time", "Waiting Time"), show="headings")
+        self.execution_table.heading("Batch ID", text="Batch ID")
+        self.execution_table.heading("PID", text="PID")
+        self.execution_table.heading("Start Time", text="Start Time")
+        self.execution_table.heading("Finish Time", text="Finish Time")
+        self.execution_table.heading("Turnaround Time", text="Turnaround Time")
+        self.execution_table.heading("Waiting Time", text="Waiting Time")
+        self.execution_table.grid(row=7, column=0, columnspan=2, pady=10)
+
+    def add_process_to_batch(self):
+        # Obtiene los valores de las entradas
+        batch_id = self.batch_id_entry.get()
+        pid = self.pid_entry.get()
+        arrive_time = self.arrive_time_entry.get()
+        burst_time = self.burst_time_entry.get()
+
+        # Llama al controlador para agregar el proceso al lote
+        self.controller.add_process_to_batch(batch_id, pid, int(arrive_time), int(burst_time))
+
+    def update_batch_table(self, batch_id, process):
+        # Añade un proceso a la tabla
+        self.batch_table.insert("", "end", values=(batch_id, process.pid, process.arrive_time, process.burst_time))
+
+    def execute_batches(self):
+        # Llama al controlador para ejecutar los lotes
+        self.controller.execute_batches()
+
+    def update_batch_execution(self, batch_id, states):
+        # Limpia la tabla antes de actualizarla
+        for row in self.execution_table.get_children():
+            self.execution_table.delete(row)
+
+        # Agrega los resultados de la ejecución a la tabla
+        for state in states:
+            self.execution_table.insert("", "end", values=(
+                batch_id,
+                state["PID"],
+                state["Start Time"],
+                state["Finish Time"],
+                state["Turnaround Time"],
+                state["Waiting Time"]
+            ))
