@@ -46,6 +46,7 @@ class ISerieProcessingView(ABC):
 
     @abstractmethod
     def showErrorMessage(self, message):
+        
         pass
 
     @abstractmethod
@@ -75,4 +76,44 @@ class ISerieProcessingController(ABC):
     
     @abstractmethod
     def run(self):
+        pass
+
+class IBatchProcessController(ABC):
+    @abstractmethod
+    def __init__(self):
+        pass
+
+    @abstractmethod
+    def addProcess(self):
+        pass
+    
+    @abstractmethod
+    def runAnimation(self):
+        pass
+    
+    @abstractmethod
+    def run(self):
+        pass
+
+class IBatchProcessingView(ABC):
+    
+    @abstractmethod
+    def drawAnimation(self, processStates):
+        pass
+
+    @abstractmethod
+    def showErrorMessage(self, message):
+        
+        pass
+
+    @abstractmethod
+    def cleanRows(self):
+        pass
+
+    @abstractmethod
+    def cleanInputs(self):
+        pass
+
+    @abstractmethod
+    def addTableValues(self, processStates):
         pass

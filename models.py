@@ -53,3 +53,4 @@ class ProcessManager(IProcessManager):
             
     def getProcessStates(self):
         return self.processStates
+
