@@ -4,21 +4,12 @@ from tkinter import ttk, messagebox
 from IClassesModels import ISerieProcessingView
 
 class SerieProcessingView(ISerieProcessingView):
-    def __init__(self, addProcess, runAnimation):
-        
-        self.root = tk.Tk()
-        self.root.title("Tabla de procesos(Procesamiento en serie)")
-        
-        windowWidth = 800
-        windowHeight = 400
-        screenWidth = self.root.winfo_screenwidth()
-        screenHeight = self.root.winfo_screenheight()
-        positionX = (screenWidth // 2) - (windowWidth // 2)
-        positionY = (screenHeight // 2) - (windowHeight // 2)
-        self.root.geometry(f"{windowWidth}x{windowHeight}+{positionX}+{positionY}")
-        
+    def __init__(self, parent, addProcess, runAnimation):
+        self.frame = ttk.Frame(parent)
+        self.frame.pack(fill="both", expand=True)
+
         self.columns = ("PID", "AT", "BT", "CT", "TAT", "WT")
-        self.table = ttk.Treeview(self.root, columns=self.columns, show="headings", height=10)
+        self.table = ttk.Treeview(self.frame, columns=self.columns, show="headings", height=10)
         
         for col in self.columns:
             self.table.heading(col, text=col)
@@ -26,7 +17,7 @@ class SerieProcessingView(ISerieProcessingView):
         
         self.table.pack(pady=10)
         
-        self.inputFrame = tk.Frame(self.root)
+        self.inputFrame = tk.Frame(self.frame)
         self.inputFrame.pack(pady=10)
         
         tk.Label(self.inputFrame, text="PID:").pack(side=tk.LEFT, padx=5)
@@ -41,7 +32,7 @@ class SerieProcessingView(ISerieProcessingView):
         self.burstTimeEntry = tk.Entry(self.inputFrame)
         self.burstTimeEntry.pack(side=tk.LEFT, padx=5)
         
-        self.buttonFrame = tk.Frame(self.root)
+        self.buttonFrame = tk.Frame(self.frame)
         self.buttonFrame.pack(pady=10)
 
         self.addButton = tk.Button(self.buttonFrame, text="Añadir proceso", command=addProcess)
@@ -55,7 +46,7 @@ class SerieProcessingView(ISerieProcessingView):
             self.showErrorMessage("Debe añadir minimo un proceso.")
             return
         
-        animationWindow = tk.Toplevel(self.root)
+        animationWindow = tk.Toplevel(self.frame)
         animationWindow.title("Animación de procesamiento en serie")
         canvas = tk.Canvas(animationWindow, width=800, height=400, bg="white")
         canvas.pack()
@@ -167,3 +158,36 @@ class SerieProcessingView(ISerieProcessingView):
     def addTableValues(self, processStates):
         for state in processStates:
             self.table.insert("", "end", values=state.getValues())
+
+class RedBackgroundView:
+    def __init__(self, parent):
+        self.frame = ttk.Frame(parent)
+        self.frame.pack(fill="both", expand=True)
+        self.canvas = tk.Canvas(self.frame, bg="red")
+        self.canvas.pack(fill="both", expand=True)
+
+class MainView:
+    def __init__(self):
+        self.root = tk.Tk()
+        self.root.title("Aplicación con Pestañas")
+        self.notebook = ttk.Notebook(self.root)
+        self.notebook.pack(fill="both", expand=True)
+
+        # Pestaña de Procesamiento en Serie
+        self.serieProcessingTab = SerieProcessingView(self.notebook, self.addProcess, self.runAnimation)
+        self.notebook.add(self.serieProcessingTab.frame, text="Procesamiento en Serie")
+
+        # Pestaña con Fondo Rojo
+        self.redBackgroundTab = RedBackgroundView(self.notebook)
+        self.notebook.add(self.redBackgroundTab.frame, text="Fondo Rojo")
+
+    def addProcess(self):
+        # Método para manejar la lógica de añadir procesos
+        pass
+
+    def runAnimation(self):
+        # Método para manejar la lógica de ejecutar la animación
+        pass
+
+    def run(self):
+        self.root.mainloop()
