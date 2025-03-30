@@ -101,9 +101,9 @@ class ProcessManager(IProcessManager):
             list: La tupla processStates con los procesos ya ejecutados y organizados.
         """
         self.currentTime = 0
-        self.processStates.sort(key=lambda x: x.arrivalTime)
         
-        for i in range(len(self.processStates)):
+        self.processStates.sort(key=lambda x: x.arriveTime)
+        for i in range (len(self.processStates)):
             if i > 0:
                 self.currentTime = self.processStates[i-1].completionTime
             else:
@@ -281,6 +281,38 @@ class ProcessManager(IProcessManager):
         """
         if i + 1 < len(self.processStates) and (self.processStates[i + 1].arrivalTime == self.currentTime) and (not self.pidRegisteredInList(processStatesAux, self.processStates[i + 1].process.pid)):
             processStatesAux.append(copy.deepcopy(self.processStates[i + 1]))
+    def runBatch(self):
+        """
+        Ejecuta el procesamiento por lotes, dividiendo los procesos en lotes y procesándolos en serie.
+
+        Args:
+            None
+
+        Returns:
+            tuple: Una lista de lotes (cada lote es una lista de procesos) y un diccionario que mapea los PIDs con sus números de lote.
+        """
+        self.currentTime = 0
+        batchSize = 4  
+        batches = []
+        batchMapping = {} 
+
+        self.processStates.sort(key=lambda x: x.arriveTime)
+
+        for i in range(0, len(self.processStates), batchSize):
+            batch = self.processStates[i:i + batchSize]
+            batchNumber = len(batches) + 1  
+            for processState in batch:
+                batchMapping[processState.process.pid] = batchNumber  
+            batches.append(batch)
+
+        for batch in batches:
+            for processState in batch:
+                if self.currentTime < processState.arriveTime:
+                    self.currentTime = processState.arriveTime
+                self.currentTime += processState.process.burstTime
+                processState.finishProcess(self.currentTime)
+
+        return batches, batchMapping  
     
     def pidRegistered(self, pid):
         """
