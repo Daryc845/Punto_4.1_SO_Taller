@@ -32,7 +32,11 @@ class IProcessManager(ABC):
         pass
 
     @abstractmethod
-    def pidRegistered(self, pid):
+    def pidRegisteredInList(self, pid):
+        pass
+    
+    @abstractmethod
+    def pidRegisteredInList(self, processStates, pid, index=None):
         pass
 
 class ISerieProcessingView(ABC):
