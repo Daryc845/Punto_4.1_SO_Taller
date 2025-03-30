@@ -95,14 +95,15 @@ class BatchProcessingController:
         
         if arriveTime:
             self.processManager.addProcess(int(pid), int(arriveTime), int(burstTime))
-            self.processManager.runSerie()
+            self.processManager.runBatch()
             batchView.cleanRows()
             batchView.addTableValues(self.processManager.processStates)
             batchView.cleanInputs()
     
     def runAnimation(self):
         batchView = self.mainView.batchProcessingTab
-        batchView.drawAnimation(self.processManager.processStates)
+        _, batchMapping = self.processManager.runBatch()  # Obtener el mapeo de lotes
+        batchView.drawAnimation(self.processManager.processStates, batchMapping)  # Pasar el mapeo a la vista
     
     def run(self):
         self.mainView.run()
@@ -110,10 +111,8 @@ class BatchProcessingController:
 
 # EJECUTA EL CONTROLADOR
 if __name__ == "__main__":
-    # Crear una instancia de MainView sin controladores
     mainView = MainView()
 
-    # Crear instancias de los controladores
     serieController = SerieProcessingController(mainView)
     batchController = BatchProcessingController(mainView)
 
@@ -125,5 +124,4 @@ if __name__ == "__main__":
     serieController.configureView()
     batchController.configureView()
 
-    # Ejecutar la aplicación
     mainView.run()

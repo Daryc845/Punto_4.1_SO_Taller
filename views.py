@@ -200,13 +200,13 @@ class BatchProcessingView(IBatchProcessingView):
         self.animate_button = tk.Button(self.buttonFrame, text="Ejecutar animacion", command=runAnimation)
         self.animate_button.pack(side=tk.LEFT, padx=5)
         
-    def drawAnimation(self, processStates):
+    def drawAnimation(self, processStates, batchMapping):
         if len(processStates) == 0:
-            self.showErrorMessage("Debe añadir minimo un proceso.")
+            self.showErrorMessage("Debe añadir mínimo un proceso.")
             return
-        
+
         animationWindow = tk.Toplevel(self.frame)
-        animationWindow.title("Animación de procesamiento en serie")
+        animationWindow.title("Animación de procesamiento por lotes")
         canvas = tk.Canvas(animationWindow, width=800, height=400, bg="white")
         canvas.pack()
         currentTime = 0
@@ -223,15 +223,18 @@ class BatchProcessingView(IBatchProcessingView):
         waitingArea = []
         runningArea = None
         completedArea = []
-        
         burstTime = None
+
+        def getBatchNumber(pid):
+            # Buscar el número del lote correspondiente al PID
+            return batchMapping.get(pid, "N/A")  # Devolver "N/A" si no se encuentra
 
         def update_canvas():
             nonlocal currentTime, waitingArea, runningArea, completedArea, burstTime
-            
+
             canvas.delete("process")
             canvas.delete("time")
-            
+
             canvas.create_text(400, 20, text=f"Tiempo actual: {currentTime}", font=("Arial", 16), tag="time")
 
             for process in processStates:
@@ -240,29 +243,28 @@ class BatchProcessingView(IBatchProcessingView):
 
             if not runningArea and waitingArea:
                 runningArea = waitingArea.pop(0)
-            
+
             if runningArea:
-                
                 if burstTime is None:
                     burstTime = runningArea.process.burstTime
                 elif burstTime == -1:
                     burstTime = runningArea.process.burstTime - 1
-                
+
                 if burstTime == 0:
                     canvas.delete("process")
                     completedArea.append(runningArea)
-                    
+
                     if len(waitingArea) > 0:
                         runningArea = waitingArea.pop(0)
                     else:
                         runningArea = None
                     burstTime = -1
-                    
-                    
+
                 if burstTime is not None and burstTime > 0:
                     burstTime -= 1
-                
+
                 if runningArea is not None:
+                    batchNumber = getBatchNumber(runningArea.process.pid)  # Obtener el número del lote
                     canvas.create_rectangle(
                         350, yStart,
                         350 + boxWidth, yStart + boxHeight,
@@ -270,10 +272,12 @@ class BatchProcessingView(IBatchProcessingView):
                     )
                     canvas.create_text(
                         350 + boxWidth // 2, yStart + boxHeight // 2,
-                        text=f"{runningArea.process.pid}", tags="process"
+                        text=f"Lote: {batchNumber}, PID: {runningArea.process.pid}",
+                        tags="process"
                     )
-            
+
             for i, process in enumerate(waitingArea):
+                batchNumber = getBatchNumber(process.process.pid)  # Obtener el número del lote
                 canvas.create_rectangle(
                     x_start, yStart + i * (boxHeight + gap),
                     x_start + boxWidth, yStart + i * (boxHeight + gap) + boxHeight,
@@ -281,10 +285,12 @@ class BatchProcessingView(IBatchProcessingView):
                 )
                 canvas.create_text(
                     x_start + boxWidth // 2, yStart + i * (boxHeight + gap) + boxHeight // 2,
-                    text=f"{process.process.pid}", tags="process"
-                )  
-            
+                    text=f"Lote: {batchNumber}, PID: {process.process.pid}",
+                    tags="process"
+                )
+
             for i, process in enumerate(completedArea):
+                batchNumber = getBatchNumber(process.process.pid)  # Obtener el número del lote
                 canvas.create_rectangle(
                     650, yStart + i * (boxHeight + gap),
                     650 + boxWidth, yStart + i * (boxHeight + gap) + boxHeight,
@@ -292,7 +298,8 @@ class BatchProcessingView(IBatchProcessingView):
                 )
                 canvas.create_text(
                     650 + boxWidth // 2, yStart + i * (boxHeight + gap) + boxHeight // 2,
-                    text=f"{process.process.pid}", tags="process"
+                    text=f"Lote: {batchNumber}, PID: {process.process.pid}",
+                    tags="process"
                 )
 
             currentTime += 1
@@ -434,7 +441,7 @@ class BatchProcessingController:
     
     def runAnimation(self):
         batchView = self.mainView.batchProcessingTab
-        batchView.drawAnimation(self.processManager.processStates)
+        batchView.drawAnimation(self.processManager.processStates, self.processManager.batchMapping)
 
     def configureView(self):
         # Configurar los botones después de que MainView esté inicializado
