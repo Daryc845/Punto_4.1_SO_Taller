@@ -11,7 +11,6 @@ class SerieProcessingController:
         self.mainView = mainView
 
     def configureView(self):
-        # Configurar los botones después de que MainView esté inicializado
         self.mainView.serieProcessingTab.addButton.config(command=self.addProcess)
         self.mainView.serieProcessingTab.animate_button.config(command=self.runAnimation)
 
@@ -55,19 +54,44 @@ class SerieProcessingController:
     def run(self):
         self.mainView.run()
 
-
-#Procesamiento por lotes
 class BatchProcessingController:
     def __init__(self, mainView=None):
+        """
+        Inicializa el controlador de procesamiento por lotes.
+
+        Args:
+            mainView (MainView): Instancia de la vista principal que contiene las pestañas de procesamiento.
+
+        Returns:
+            None
+        """
         self.processManager = ProcessManager()
         self.mainView = mainView
 
     def configureView(self):
-        # Configurar los botones después de que MainView esté inicializado
+        """
+        Configura los botones de la vista de procesamiento por lotes para que ejecuten las acciones correspondientes.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
+
         self.mainView.batchProcessingTab.addButton.config(command=self.addProcess)
         self.mainView.batchProcessingTab.animate_button.config(command=self.runAnimation)
 
     def addProcess(self):
+        """
+        Añade un proceso a la lista de procesos del gestor de procesos por lotes.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
         batchView = self.mainView.batchProcessingTab
         pid = batchView.pid_entry.get()
         arriveTime = batchView.arriveTimeEntry.get()
@@ -101,26 +125,41 @@ class BatchProcessingController:
             batchView.cleanInputs()
     
     def runAnimation(self):
+        """
+        Ejecuta la animación del procesamiento por lotes, mostrando visualmente el estado de los procesos.
+
+        Args:
+            None (Los datos de los procesos y el mapeo de lotes se obtienen del gestor de procesos).
+
+        Returns:
+            None
+        """ 
         batchView = self.mainView.batchProcessingTab
-        _, batchMapping = self.processManager.runBatch()  # Obtener el mapeo de lotes
-        batchView.drawAnimation(self.processManager.processStates, batchMapping)  # Pasar el mapeo a la vista
+        _, batchMapping = self.processManager.runBatch()  
+        batchView.drawAnimation(self.processManager.processStates, batchMapping)  
     
     def run(self):
+        """
+        Inicia la ejecución de la vista principal.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
         self.mainView.run()
 
 
-# EJECUTA EL CONTROLADOR
 if __name__ == "__main__":
     mainView = MainView()
 
     serieController = SerieProcessingController(mainView)
     batchController = BatchProcessingController(mainView)
 
-    # Configurar las pestañas en MainView
     mainView.configureSerieProcessingTab(serieController)
     mainView.configureBatchProcessingTab(batchController)
 
-    # Configurar las vistas después de inicializar MainView
     serieController.configureView()
     batchController.configureView()
 

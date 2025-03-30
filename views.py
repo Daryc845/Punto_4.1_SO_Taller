@@ -159,11 +159,19 @@ class SerieProcessingView(ISerieProcessingView):
         for state in processStates:
             self.table.insert("", "end", values=state.getValues())
 
-
-#Vista del procesamiento por lotes
 class BatchProcessingView(IBatchProcessingView):
     def __init__(self, parent, addProcess, runAnimation):
-        # Inicializa la vista de procesamiento por lotes en el contenedor padre
+        """
+        Inicializa la vista de procesamiento por lotes.
+
+        Args:
+            parent (tk.Widget): Contenedor padre donde se colocará la vista.
+            addProcess (function): Función para añadir un proceso.
+            runAnimation (function): Función para ejecutar la animación.
+
+        Returns:
+            None
+        """
         self.frame = ttk.Frame(parent)
         self.frame.pack(fill="both", expand=True)
 
@@ -201,6 +209,16 @@ class BatchProcessingView(IBatchProcessingView):
         self.animate_button.pack(side=tk.LEFT, padx=5)
         
     def drawAnimation(self, processStates, batchMapping):
+        """
+        Dibuja la animación del procesamiento por lotes.
+
+        Args:
+            processStates (list): Lista de estados de los procesos.
+            batchMapping (dict): Diccionario que mapea los PIDs con sus números de lote.
+
+        Returns:
+            None
+        """
         if len(processStates) == 0:
             self.showErrorMessage("Debe añadir mínimo un proceso.")
             return
@@ -226,10 +244,27 @@ class BatchProcessingView(IBatchProcessingView):
         burstTime = None
 
         def getBatchNumber(pid):
-            # Buscar el número del lote correspondiente al PID
-            return batchMapping.get(pid, "N/A")  # Devolver "N/A" si no se encuentra
+            """
+            Obtiene el número del lote al que pertenece un proceso.
+
+            Args:
+                pid (int): Identificador único del proceso.
+
+            Returns:
+                int: Número del lote al que pertenece el proceso.
+            """
+            return batchMapping.get(pid, "N/A")  
 
         def update_canvas():
+            """
+            Actualiza el lienzo de la animación en cada iteración.
+
+            Args:
+                None
+
+            Returns:
+                None
+            """
             nonlocal currentTime, waitingArea, runningArea, completedArea, burstTime
 
             canvas.delete("process")
@@ -264,7 +299,7 @@ class BatchProcessingView(IBatchProcessingView):
                     burstTime -= 1
 
                 if runningArea is not None:
-                    batchNumber = getBatchNumber(runningArea.process.pid)  # Obtener el número del lote
+                    batchNumber = getBatchNumber(runningArea.process.pid)  
                     canvas.create_rectangle(
                         350, yStart,
                         350 + boxWidth, yStart + boxHeight,
@@ -277,7 +312,7 @@ class BatchProcessingView(IBatchProcessingView):
                     )
 
             for i, process in enumerate(waitingArea):
-                batchNumber = getBatchNumber(process.process.pid)  # Obtener el número del lote
+                batchNumber = getBatchNumber(process.process.pid)  
                 canvas.create_rectangle(
                     x_start, yStart + i * (boxHeight + gap),
                     x_start + boxWidth, yStart + i * (boxHeight + gap) + boxHeight,
@@ -290,7 +325,7 @@ class BatchProcessingView(IBatchProcessingView):
                 )
 
             for i, process in enumerate(completedArea):
-                batchNumber = getBatchNumber(process.process.pid)  # Obtener el número del lote
+                batchNumber = getBatchNumber(process.process.pid)  
                 canvas.create_rectangle(
                     650, yStart + i * (boxHeight + gap),
                     650 + boxWidth, yStart + i * (boxHeight + gap) + boxHeight,
@@ -310,48 +345,117 @@ class BatchProcessingView(IBatchProcessingView):
         update_canvas()
     
     def showErrorMessage(self, message):
+        """
+        Muestra un mensaje de error en un cuadro de diálogo.
+
+        Args:
+            message (str): Mensaje de error a mostrar.
+
+        Returns:
+            None
+        """
         messagebox.showerror("Error", message)
     
     def cleanRows(self):
+        """
+        Limpia todas las filas de la tabla de procesos.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
         for row in self.table.get_children():
             self.table.delete(row)
             
     def cleanInputs(self):
+        """
+        Limpia los campos de entrada de la vista.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
         self.arriveTimeEntry.delete(0, tk.END) 
         self.pid_entry.delete(0, tk.END)
         self.burstTimeEntry.delete(0, tk.END)
     
     def addTableValues(self, processStates):
+        """
+        Añade los valores de los estados de los procesos a la tabla.
+
+        Args:
+            processStates (list): Lista de estados de los procesos.
+
+        Returns:
+            None
+        """
         for state in processStates:
             self.table.insert("", "end", values=state.getValues())
 
 
 class MainView:
     def __init__(self):
+        """
+        Inicializa la vista principal con pestañas para procesamiento en serie y por lotes.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
         self.root = tk.Tk()
         self.root.title("Aplicación con Pestañas")
         self.notebook = ttk.Notebook(self.root)
         self.notebook.pack(fill="both", expand=True)
 
-        # Inicializar las pestañas como None
         self.serieProcessingTab = None
         self.batchProcessingTab = None
 
     def configureSerieProcessingTab(self, serieController):
-        # Configurar la pestaña de procesamiento en serie
+        """
+        Configura la pestaña de procesamiento en serie.
+
+        Args:
+            serieController (SerieProcessingController): Controlador para el procesamiento en serie.
+
+        Returns:
+            None
+        """
         self.serieProcessingTab = SerieProcessingView(
             self.notebook, serieController.addProcess, serieController.runAnimation
         )
         self.notebook.add(self.serieProcessingTab.frame, text="Procesamiento en Serie")
 
     def configureBatchProcessingTab(self, batchController):
-        # Configurar la pestaña de procesamiento por lotes
+        """
+        Configura la pestaña de procesamiento por lotes.
+
+        Args:
+            batchController (BatchProcessingController): Controlador para el procesamiento por lotes.
+
+        Returns:
+            None
+        """
         self.batchProcessingTab = BatchProcessingView(
             self.notebook, batchController.addProcess, batchController.runAnimation
         )
         self.notebook.add(self.batchProcessingTab.frame, text="Procesamiento por Lotes")
 
     def run(self):
+        """
+        Inicia el bucle principal de la aplicación.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
         self.root.mainloop()
 
 
@@ -404,10 +508,28 @@ class SerieProcessingController:
 
 class BatchProcessingController:
     def __init__(self, mainView=None):
+        """
+        Inicializa el controlador de procesamiento por lotes.
+
+        Args:
+            mainView (MainView): Instancia de la vista principal que contiene las pestañas de procesamiento.
+
+        Returns:
+            None
+        """
         self.processManager = ProcessManager()
         self.mainView = mainView
 
     def addProcess(self):
+        """
+        Añade un proceso a la lista de procesos del gestor de procesos por lotes.
+
+        Args:
+            None (Los valores se obtienen directamente de los campos de entrada en la vista).
+
+        Returns:
+            None
+        """
         batchView = self.mainView.batchProcessingTab
         pid = batchView.pid_entry.get()
         arriveTime = batchView.arriveTimeEntry.get()
@@ -440,10 +562,27 @@ class BatchProcessingController:
         batchView.cleanInputs()
     
     def runAnimation(self):
+        """
+        Ejecuta la animación del procesamiento por lotes, mostrando visualmente el estado de los procesos.
+
+        Args:
+            None (Los datos de los procesos y el mapeo de lotes se obtienen del gestor de procesos).
+
+        Returns:
+            None
+        """
         batchView = self.mainView.batchProcessingTab
         batchView.drawAnimation(self.processManager.processStates, self.processManager.batchMapping)
 
     def configureView(self):
-        # Configurar los botones después de que MainView esté inicializado
+        """
+        Configura los botones de la vista de procesamiento por lotes para que ejecuten las acciones correspondientes.
+
+        Args:
+            None
+
+        Returns:
+            None
+        """
         self.mainView.batchProcessingTab.addButton.config(command=self.addProcess)
         self.mainView.batchProcessingTab.animate_button.config(command=self.runAnimation)

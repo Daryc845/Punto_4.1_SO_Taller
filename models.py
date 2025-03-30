@@ -46,23 +46,29 @@ class ProcessManager(IProcessManager):
         return self.processStates
     
     def runBatch(self):
-        self.currentTime = 0
-        batchSize = 4  # Tamaño de cada lote
-        batches = []
-        batchMapping = {}  # Diccionario para almacenar el número de lote por PID
+        """
+        Ejecuta el procesamiento por lotes, dividiendo los procesos en lotes y procesándolos en serie.
 
-        # Ordenar los procesos por tiempo de llegada
+        Args:
+            None
+
+        Returns:
+            tuple: Una lista de lotes (cada lote es una lista de procesos) y un diccionario que mapea los PIDs con sus números de lote.
+        """
+        self.currentTime = 0
+        batchSize = 4  
+        batches = []
+        batchMapping = {} 
+
         self.processStates.sort(key=lambda x: x.arriveTime)
 
-        # Dividir los procesos en lotes de tamaño batchSize
         for i in range(0, len(self.processStates), batchSize):
             batch = self.processStates[i:i + batchSize]
-            batchNumber = len(batches) + 1  # Número del lote (1, 2, 3, ...)
+            batchNumber = len(batches) + 1  
             for processState in batch:
-                batchMapping[processState.process.pid] = batchNumber  # Asociar PID con el número del lote
+                batchMapping[processState.process.pid] = batchNumber  
             batches.append(batch)
 
-        # Ejecutar cada lote en serie
         for batch in batches:
             for processState in batch:
                 if self.currentTime < processState.arriveTime:
@@ -70,7 +76,7 @@ class ProcessManager(IProcessManager):
                 self.currentTime += processState.process.burstTime
                 processState.finishProcess(self.currentTime)
 
-        return batches, batchMapping  # Devolver los lotes y el mapeo de lotes
+        return batches, batchMapping  
     
     def pidRegistered(self, pid):
         for process in self.processStates:
