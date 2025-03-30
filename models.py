@@ -102,7 +102,7 @@ class ProcessManager(IProcessManager):
         """
         self.currentTime = 0
         
-        self.processStates.sort(key=lambda x: x.arriveTime)
+        self.processStates.sort(key=lambda x: x.arrivalTime)
         for i in range (len(self.processStates)):
             if i > 0:
                 self.currentTime = self.processStates[i-1].completionTime
@@ -279,8 +279,9 @@ class ProcessManager(IProcessManager):
             processStatesAux (list): Lista auxiliar de procesos.
             i (int): Índice del proceso actual.
         """
-        if i + 1 < len(self.processStates) and (self.processStates[i + 1].arrivalTime == self.currentTime) and (not self.pidRegisteredInList(processStatesAux, self.processStates[i + 1].process.pid)):
+        if i + 1 < len(self.processStates) and (((self.processStates[i + 1].arrivalTime == self.currentTime) and (not self.pidRegisteredInList(processStatesAux, self.processStates[i + 1].process.pid))) or ((self.processStates[i + 1].arrivalTime == self.currentTime + 1) and (not self.pidRegisteredInList(processStatesAux, self.processStates[i + 1].process.pid)))):
             processStatesAux.append(copy.deepcopy(self.processStates[i + 1]))
+    
     def runBatch(self):
         """
         Ejecuta el procesamiento por lotes, dividiendo los procesos en lotes y procesándolos en serie.
@@ -296,7 +297,7 @@ class ProcessManager(IProcessManager):
         batches = []
         batchMapping = {} 
 
-        self.processStates.sort(key=lambda x: x.arriveTime)
+        self.processStates.sort(key=lambda x: x.arrivalTime)
 
         for i in range(0, len(self.processStates), batchSize):
             batch = self.processStates[i:i + batchSize]
@@ -307,8 +308,8 @@ class ProcessManager(IProcessManager):
 
         for batch in batches:
             for processState in batch:
-                if self.currentTime < processState.arriveTime:
-                    self.currentTime = processState.arriveTime
+                if self.currentTime < processState.arrivalTime:
+                    self.currentTime = processState.arrivalTime
                 self.currentTime += processState.process.burstTime
                 processState.finishProcess(self.currentTime)
 

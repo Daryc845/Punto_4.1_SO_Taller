@@ -1,7 +1,9 @@
+import copy
 import tkinter as tk
 from tkinter import ttk
 from tkinter import ttk, messagebox
 from IClassesModels import ISerieProcessingView, IBatchProcessingView
+from models import ProcessManager
 
 class SerieProcessingView(ISerieProcessingView):
     def __init__(self, parent, addProcess, runAnimation):
@@ -22,16 +24,7 @@ class SerieProcessingView(ISerieProcessingView):
         el BurstTime y almacenarlos hasta cuando se requieran mediante eventos de teclado.
         """
         self.frame = ttk.Frame(parent)
-        self.root = tk.Tk()
-        self.root.title("Tabla de procesos(Procesamiento en serie)")
         self.frame.pack(fill="both", expand=True)
-        windowWidth = 800
-        windowHeight = 400
-        screenWidth = self.root.winfo_screenwidth()
-        screenHeight = self.root.winfo_screenheight()
-        positionX = (screenWidth // 2) - (windowWidth // 2)
-        positionY = (screenHeight // 2) - (windowHeight // 2)
-        self.root.geometry(f"{windowWidth}x{windowHeight}+{positionX}+{positionY}")
         
         self.columns = ("PID", "AT", "BT", "CT", "TAT", "WT")
         self.table = ttk.Treeview(self.frame, columns=self.columns, show="headings", height=10)
@@ -100,7 +93,7 @@ class SerieProcessingView(ISerieProcessingView):
             self.showErrorMessage("Debe añadir mínimo un proceso.")
             return
         
-        animationWindow = tk.Toplevel(self.root)
+        animationWindow = tk.Toplevel(self.frame)
         animationWindow.title("Animación de procesamiento en serie")
         canvas = tk.Canvas(animationWindow, width=800, height=400, bg="white")
         canvas.pack()
@@ -265,7 +258,7 @@ class SerieProcessingView(ISerieProcessingView):
         )
         canvas.create_text(
             350 + boxWidth // 2, yStart + boxHeight // 2,
-            text=f"{runningArea.process.pid}", tags="process"
+            text=f"{"PID: "+str(runningArea.process.pid)}", tags="process"
         )
 
     def drawWaitingArea(self, canvas, waitingArea, x_start, yStart, boxWidth, boxHeight, gap):
@@ -290,7 +283,7 @@ class SerieProcessingView(ISerieProcessingView):
             )
             canvas.create_text(
                 x_start + boxWidth // 2, yStart + i * (boxHeight + gap) + boxHeight // 2,
-                text=f"{process.process.pid}", tags="process"
+                text=f"{"PID: "+str(process.process.pid)}", tags="process"
             )
 
     def drawCompletedArea(self, canvas, completedArea, yStart, boxWidth, boxHeight, gap):
@@ -315,7 +308,7 @@ class SerieProcessingView(ISerieProcessingView):
             )
             canvas.create_text(
                 650 + boxWidth // 2, yStart + i * (boxHeight + gap) + boxHeight // 2,
-                text=f"{process.process.pid}", tags="process"
+                text=f"{"PID: "+str(process.process.pid)}", tags="process"
             )
     
     def showErrorMessage(self, message):
@@ -353,7 +346,7 @@ class SerieProcessingView(ISerieProcessingView):
             self.table.insert("", "end", values=state.getValues())
             
 class TimeshareProcessingView(ISerieProcessingView):
-    def __init__(self, addProcess, runAnimation, updateTable):
+    def __init__(self, parent, addProcess, runAnimation, updateTable):
         """
         Construye un objeto TimeshareProcessingView, este objeto permite gestionar la interfaz del programa de simulación,
         para ello define una estructura visual primero definiendo el tamaño y proporciones de la ventana principal, luego 
@@ -370,19 +363,11 @@ class TimeshareProcessingView(ISerieProcessingView):
         animación y otro para el evento de actualizar tabla y tambien campos de entrada(inputs) para recibir los datos necesarios como el PID, el ArrivalTime,
         el BurstTime y el Quantum y almacenarlos hasta cuando se requieran mediante eventos de teclado.
         """
-        self.root = tk.Tk()
-        self.root.title("Tabla de procesos(Procesamiento de tiempo compartido por Round Robin)")
         
-        windowWidth = 800
-        windowHeight = 400
-        screenWidth = self.root.winfo_screenwidth()
-        screenHeight = self.root.winfo_screenheight()
-        positionX = (screenWidth // 2) - (windowWidth // 2)
-        positionY = (screenHeight // 2) - (windowHeight // 2)
-        self.root.geometry(f"{windowWidth}x{windowHeight}+{positionX}+{positionY}")
-        
+        self.frame = ttk.Frame(parent)
+        self.frame.pack(fill="both", expand=True)
         self.columns = ("PID", "AT", "BT", "CT", "TAT", "WT")
-        self.table = ttk.Treeview(self.root, columns=self.columns, show="headings", height=10)
+        self.table = ttk.Treeview(self.frame, columns=self.columns, show="headings", height=10)
         
         for col in self.columns:
             self.table.heading(col, text=col)
@@ -390,7 +375,7 @@ class TimeshareProcessingView(ISerieProcessingView):
         
         self.table.pack(pady=10)
         
-        self.inputFrame = tk.Frame(self.root)
+        self.inputFrame = tk.Frame(self.frame)
         self.inputFrame.pack(pady=10)
         
         tk.Label(self.inputFrame, text="PID:").pack(side=tk.LEFT, padx=5)
@@ -405,17 +390,17 @@ class TimeshareProcessingView(ISerieProcessingView):
         self.burstTimeEntry = tk.Entry(self.inputFrame)
         self.burstTimeEntry.pack(side=tk.LEFT, padx=5)
         
-        self.quantumFrame = tk.Frame(self.root)
+        self.quantumFrame = tk.Frame(self.frame)
         self.quantumFrame.pack(pady=10)
 
         tk.Label(self.quantumFrame, text="Duración del Quantum:").pack(side=tk.LEFT, padx=5)
         self.quantumEntry = tk.Entry(self.quantumFrame)
         self.quantumEntry.pack(side=tk.LEFT, padx=5)
         
-        self.addButton = tk.Button(self.quantumFrame, text="Actualizar tabla", command=updateTable)
-        self.addButton.pack(side=tk.LEFT, padx=5)
+        self.updateButton = tk.Button(self.quantumFrame, text="Actualizar tabla", command=updateTable)
+        self.updateButton.pack(side=tk.LEFT, padx=5)
         
-        self.buttonFrame = tk.Frame(self.root)
+        self.buttonFrame = tk.Frame(self.frame)
         self.buttonFrame.pack(pady=10)
 
         self.addButton = tk.Button(self.buttonFrame, text="Añadir proceso", command=addProcess)
@@ -511,7 +496,7 @@ class TimeshareProcessingView(ISerieProcessingView):
             TopLevel: La ventana secundaria.
             Canvas: El contenedor canvas.
         """
-        animationWindow = tk.Toplevel(self.root)
+        animationWindow = tk.Toplevel(self.frame)
         animationWindow.title("Animación de procesamiento por Round Robin")
         canvas = tk.Canvas(animationWindow, width=800, height=400, bg="white")
         canvas.pack()
@@ -643,7 +628,7 @@ class TimeshareProcessingView(ISerieProcessingView):
                 )
                 canvas.create_text(
                     350 + boxWidth // 2, yStart + boxHeight // 2,
-                    text=f"{runningArea.process.pid}", tags="process"
+                    text=f"{"PID: "+str(runningArea.process.pid)}", tags="process"
                 )
 
         return runningArea, burstTime, quantumCounter
@@ -670,7 +655,7 @@ class TimeshareProcessingView(ISerieProcessingView):
             )
             canvas.create_text(
                 x_start + boxWidth // 2, yStart + i * (boxHeight + gap) + boxHeight // 2,
-                text=f"{process.process.pid}", tags="process"
+                text=f"{"PID: "+str(process.process.pid)}", tags="process"
             )
 
     def drawCompletedArea(self, canvas, completedArea, yStart, boxWidth, boxHeight, gap):
@@ -695,7 +680,7 @@ class TimeshareProcessingView(ISerieProcessingView):
             )
             canvas.create_text(
                 650 + boxWidth // 2, yStart + i * (boxHeight + gap) + boxHeight // 2,
-                text=f"{process.process.pid}", tags="process"
+                text=f"{"PID: "+str(process.process.pid)}", tags="process"
             )
     
     def showErrorMessage(self, message):
@@ -766,8 +751,8 @@ class BatchProcessingView(IBatchProcessingView):
         self.pid_entry.pack(side=tk.LEFT, padx=5)
         
         tk.Label(self.inputFrame, text="Arrive Time:").pack(side=tk.LEFT, padx=5)
-        self.arriveTimeEntry = tk.Entry(self.inputFrame)
-        self.arriveTimeEntry.pack(side=tk.LEFT, padx=5)
+        self.arrivalTimeEntry = tk.Entry(self.inputFrame)
+        self.arrivalTimeEntry.pack(side=tk.LEFT, padx=5)
         
         tk.Label(self.inputFrame, text="Burst Time:").pack(side=tk.LEFT, padx=5)
         self.burstTimeEntry = tk.Entry(self.inputFrame)
@@ -847,7 +832,7 @@ class BatchProcessingView(IBatchProcessingView):
             canvas.create_text(400, 20, text=f"Tiempo actual: {currentTime}", font=("Arial", 16), tag="time")
 
             for process in processStates:
-                if process.arriveTime == currentTime:
+                if process.arrivalTime == currentTime:
                     waitingArea.append(process)
 
             if not runningArea and waitingArea:
@@ -953,7 +938,7 @@ class BatchProcessingView(IBatchProcessingView):
         Returns:
             None
         """
-        self.arriveTimeEntry.delete(0, tk.END) 
+        self.arrivalTimeEntry.delete(0, tk.END) 
         self.pid_entry.delete(0, tk.END)
         self.burstTimeEntry.delete(0, tk.END)
     
@@ -988,6 +973,7 @@ class MainView:
         self.notebook.pack(fill="both", expand=True)
 
         self.serieProcessingTab = None
+        self.timeshareProcessingTab = None
         self.batchProcessingTab = None
 
     def configureSerieProcessingTab(self, serieController):
@@ -1004,6 +990,21 @@ class MainView:
             self.notebook, serieController.addProcess, serieController.runAnimation
         )
         self.notebook.add(self.serieProcessingTab.frame, text="Procesamiento en Serie")
+        
+    def configureTimeshareProcessingTab(self, timeshareController):
+        """
+        Configura la pestaña de procesamiento en serie.
+
+        Args:
+            serieController (SerieProcessingController): Controlador para el procesamiento en serie.
+
+        Returns:
+            None
+        """
+        self.timeshareProcessingTab = TimeshareProcessingView(
+            self.notebook, timeshareController.addProcess, timeshareController.runAnimation, timeshareController.updateTable
+        )
+        self.notebook.add(self.timeshareProcessingTab.frame, text="Procesamiento en Tiempo compartido")
 
     def configureBatchProcessingTab(self, batchController):
         """
@@ -1033,130 +1034,4 @@ class MainView:
         self.root.mainloop()
 
 
-class SerieProcessingController:
-    def __init__(self, mainView=None):
-        self.processManager = ProcessManager()
-        self.mainView = mainView
 
-    def addProcess(self):
-        serieView = self.mainView.serieProcessingTab
-        pid = serieView.pid_entry.get()
-        arriveTime = serieView.arriveTimeEntry.get()
-        burstTime = serieView.burstTimeEntry.get()
-        
-        if not pid.strip():
-            serieView.showErrorMessage("El campo PID no puede estar vacío.")
-            return
-        
-        if not arriveTime.strip():
-            serieView.showErrorMessage("El campo Arrive Time no puede estar vacío.")
-            return
-        
-        if not burstTime.strip():
-            serieView.showErrorMessage("El campo Burst Time no puede estar vacío.")
-            return
-        
-        if not pid.isdigit() or not arriveTime.isdigit() or not burstTime.isdigit():
-            serieView.showErrorMessage("Todos los campos deben contener valores numéricos.")
-            return
-        
-        if self.processManager.pidRegistered(int(pid)):
-            serieView.showErrorMessage("El PID ya está registrado, digite otro.")
-            return
-        
-        self.processManager.addProcess(int(pid), int(arriveTime), int(burstTime))
-        self.processManager.runSerie()
-        serieView.cleanRows()
-        serieView.addTableValues(self.processManager.processStates)
-        serieView.cleanInputs()
-    
-    def runAnimation(self):
-        serieView = self.mainView.serieProcessingTab
-        serieView.drawAnimation(self.processManager.processStates)
-
-    def configureView(self):
-        # Configurar los botones después de que MainView esté inicializado
-        self.mainView.serieProcessingTab.addButton.config(command=self.addProcess)
-        self.mainView.serieProcessingTab.animate_button.config(command=self.runAnimation)
-
-
-class BatchProcessingController:
-    def __init__(self, mainView=None):
-        """
-        Inicializa el controlador de procesamiento por lotes.
-
-        Args:
-            mainView (MainView): Instancia de la vista principal que contiene las pestañas de procesamiento.
-
-        Returns:
-            None
-        """
-        self.processManager = ProcessManager()
-        self.mainView = mainView
-
-    def addProcess(self):
-        """
-        Añade un proceso a la lista de procesos del gestor de procesos por lotes.
-
-        Args:
-            None (Los valores se obtienen directamente de los campos de entrada en la vista).
-
-        Returns:
-            None
-        """
-        batchView = self.mainView.batchProcessingTab
-        pid = batchView.pid_entry.get()
-        arriveTime = batchView.arriveTimeEntry.get()
-        burstTime = batchView.burstTimeEntry.get()
-        
-        if not pid.strip():
-            batchView.showErrorMessage("El campo PID no puede estar vacío.")
-            return
-        
-        if not arriveTime.strip():
-            batchView.showErrorMessage("El campo Arrive Time no puede estar vacío.")
-            return
-        
-        if not burstTime.strip():
-            batchView.showErrorMessage("El campo Burst Time no puede estar vacío.")
-            return
-        
-        if not pid.isdigit() or not arriveTime.isdigit() or not burstTime.isdigit():
-            batchView.showErrorMessage("Todos los campos deben contener valores numéricos.")
-            return
-        
-        if self.processManager.pidRegistered(int(pid)):
-            batchView.showErrorMessage("El PID ya está registrado, digite otro.")
-            return
-        
-        self.processManager.addProcess(int(pid), int(arriveTime), int(burstTime))
-        self.processManager.runSerie()
-        batchView.cleanRows()
-        batchView.addTableValues(self.processManager.processStates)
-        batchView.cleanInputs()
-    
-    def runAnimation(self):
-        """
-        Ejecuta la animación del procesamiento por lotes, mostrando visualmente el estado de los procesos.
-
-        Args:
-            None (Los datos de los procesos y el mapeo de lotes se obtienen del gestor de procesos).
-
-        Returns:
-            None
-        """
-        batchView = self.mainView.batchProcessingTab
-        batchView.drawAnimation(self.processManager.processStates, self.processManager.batchMapping)
-
-    def configureView(self):
-        """
-        Configura los botones de la vista de procesamiento por lotes para que ejecuten las acciones correspondientes.
-
-        Args:
-            None
-
-        Returns:
-            None
-        """
-        self.mainView.batchProcessingTab.addButton.config(command=self.addProcess)
-        self.mainView.batchProcessingTab.animate_button.config(command=self.runAnimation)

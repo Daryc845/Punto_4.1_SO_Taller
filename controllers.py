@@ -8,7 +8,7 @@ import copy
 
 
 class SerieProcessingController(ISerieProcessingController):
-    def __init__(self):
+    def __init__(self, mainView=None):
         """
         Construye un objeto SerieProcessingController, este objeto gestiona la relacion del modelo con la vista,
         basicamente funciona como el controlador del administrador de tareas segun el esquema de procesamiento en serie.
@@ -16,7 +16,7 @@ class SerieProcessingController(ISerieProcessingController):
         un objeto modelo(processManager)
         """
         self.processManager = ProcessManager()
-        self.serieView = SerieProcessingView(self.addProcess, self.runAnimation)
+        self.mainView = mainView
     
     def addProcess(self):
         """
@@ -24,51 +24,64 @@ class SerieProcessingController(ISerieProcessingController):
         numeros validos ingresados(enteros, mayores que 1) y no tienen otros tipos de caracteres, en caso contrario genera avisos con
         el metodo showErrorMessage de serieView, luego ejecuta la simulación con runSerie del processManager y actualiza la vista con addTableValues() de serieView
         """
-        pid = self.serieView.pid_entry.get()
-        arrivalTime = self.serieView.arrivalTimeEntry.get()
-        burstTime = self.serieView.burstTimeEntry.get()
+        serieView = self.mainView.serieProcessingTab
+        pid = serieView.pid_entry.get()
+        arrivalTime = serieView.arrivalTimeEntry.get()
+        burstTime = serieView.burstTimeEntry.get()
         
         if not pid.strip():
-            self.serieView.showErrorMessage("El campo PID no puede estar vacío.")
+            serieView.showErrorMessage("El campo PID no puede estar vacío.")
             return
         
         if not arrivalTime.strip():
-            self.serieView.showErrorMessage("El campo Arrive Time no puede estar vacío.")
+            serieView.showErrorMessage("El campo Arrive Time no puede estar vacío.")
             return
         
         if not burstTime.strip():
-            self.serieView.showErrorMessage("El campo Burst Time no puede estar vacío.")
+            serieView.showErrorMessage("El campo Burst Time no puede estar vacío.")
             return
         
         if not pid.isdigit() or not arrivalTime.isdigit() or not burstTime.isdigit():
-            self.serieView.showErrorMessage("Todos los campos deben contener valores numéricos.")
+            serieView.showErrorMessage("Todos los campos deben contener valores numéricos.")
             return
         
         if self.processManager.pidRegistered(int(pid)):
-            self.serieView.showErrorMessage("El PID ya esta registrado, digite otro.")
+            serieView.showErrorMessage("El PID ya esta registrado, digite otro.")
             return
         
         if arrivalTime:
             self.processManager.addProcess(int(pid), int(arrivalTime), int(burstTime))
             self.processManager.runSerie()
-            self.serieView.cleanRows()
-            self.serieView.addTableValues(self.processManager.processStates)
-            self.serieView.cleanInputs()
+            serieView.cleanRows()
+            serieView.addTableValues(self.processManager.processStates)
+            serieView.cleanInputs()
+        
+        def run(self):
+            """
+            Inicia la ejecución de la vista principal.
+
+            Args:
+                None
+
+            Returns:
+                None
+            """
+            self.mainView.run()
     
     def runAnimation(self):
         """
         Gestiona el evento de ver animación, para ello hace un llamado al metodo draw animation de serieView.
         """
-        self.serieView.drawAnimation(self.processManager.processStates)
+        serieView = self.mainView.serieProcessingTab
+        serieView.drawAnimation(self.processManager.processStates)
     
-    def run(self):
-        """
-        Ejecuta la interfaz de serieView.
-        """
-        self.serieView.root.mainloop()
+    def configureView(self):
+        # Configurar los botones después de que MainView esté inicializado
+        self.mainView.serieProcessingTab.addButton.config(command=self.addProcess)
+        self.mainView.serieProcessingTab.animate_button.config(command=self.runAnimation)
         
 class TimeshareProcessingController(ISerieProcessingController):
-    def __init__(self):
+    def __init__(self, mainView=None):
         """
         Construye un objeto TimeshareProcessingController, este objeto gestiona la relacion del modelo con la vista,
         basicamente funciona como el controlador del administrador de tareas segun el esquema de procesamiento en tiempo compartido.
@@ -76,7 +89,8 @@ class TimeshareProcessingController(ISerieProcessingController):
         un objeto modelo(processManager)
         """
         self.processManager = ProcessManager()
-        self.shareView = TimeshareProcessingView(self.addProcess, self.runAnimation, self.updateTable)
+        self.mainView = mainView
+        #shareView = TimeshareProcessingView(self.addProcess, self.runAnimation, self.updateTable)
     
     def addProcess(self):
         """
@@ -84,43 +98,44 @@ class TimeshareProcessingController(ISerieProcessingController):
         numeros validos ingresados(mayores que 0) y no tienen otros tipos de caracteres, en caso contrario genera avisos con
         el metodo showErrorMessage de shareView, luego ejecuta la simulación con runRoundRobin del processManager y actualiza la vista con addTableValues() de shareView
         """
-        pid = self.shareView.pid_entry.get()
-        arrivalTime = self.shareView.arrivalTimeEntry.get()
-        burstTime = self.shareView.burstTimeEntry.get()
-        quantum = self.shareView.quantumEntry.get()
+        shareView = self.mainView.timeshareProcessingTab
+        pid = shareView.pid_entry.get()
+        arrivalTime = shareView.arrivalTimeEntry.get()
+        burstTime = shareView.burstTimeEntry.get()
+        quantum = shareView.quantumEntry.get()
         
         if not pid.strip():
-            self.shareView.showErrorMessage("El campo PID no puede estar vacío.")
+            shareView.showErrorMessage("El campo PID no puede estar vacío.")
             return
         
         if not arrivalTime.strip():
-            self.shareView.showErrorMessage("El campo Arrive Time no puede estar vacío.")
+            shareView.showErrorMessage("El campo Arrive Time no puede estar vacío.")
             return
         
         if not burstTime.strip():
-            self.shareView.showErrorMessage("El campo Burst Time no puede estar vacío.")
+            shareView.showErrorMessage("El campo Burst Time no puede estar vacío.")
             return
         
         if not quantum.strip():
-            self.shareView.showErrorMessage("El campo Quantum no puede estar vacío.")
+            shareView.showErrorMessage("El campo Quantum no puede estar vacío.")
             return
         
         if not pid.isdigit() or not arrivalTime.isdigit() or not burstTime.isdigit() or not quantum.isdigit():
-            self.shareView.showErrorMessage("Todos los campos deben contener valores numéricos.")
+            shareView.showErrorMessage("Todos los campos deben contener valores numéricos.")
             return
         
         if int(quantum) < 0:
-            self.shareView.showErrorMessage("El campo Quantum debe ser mayor a 0.")
+            shareView.showErrorMessage("El campo Quantum debe ser mayor a 0.")
             return
         
         if self.processManager.pidRegistered(int(pid)):
-            self.shareView.showErrorMessage("El PID ya esta registrado, digite otro.")
+            shareView.showErrorMessage("El PID ya esta registrado, digite otro.")
             return
         
         self.processManager.addProcess(int(pid), int(arrivalTime), int(burstTime))
-        self.shareView.cleanRows()
-        self.shareView.addTableValues(self.processManager.runRoundRobin(int(quantum)))
-        self.shareView.cleanInputs()
+        shareView.cleanRows()
+        shareView.addTableValues(self.processManager.runRoundRobin(int(quantum)))
+        shareView.cleanInputs()
     
     def runAnimation(self):
         """
@@ -128,17 +143,18 @@ class TimeshareProcessingController(ISerieProcessingController):
         y que no tenga otros tipos de caracteres, de lo contrario genera avisos usando el metodo showErrorMessage de shareView, si todo esta bien
         hace un llamado al metodo draw animation de shareView.
         """
-        quantum = self.shareView.quantumEntry.get()
+        shareView = self.mainView.timeshareProcessingTab
+        quantum = shareView.quantumEntry.get()
         if not quantum.strip():
-            self.shareView.showErrorMessage("El campo Quantum no puede estar vacío.")
+            shareView.showErrorMessage("El campo Quantum no puede estar vacío.")
             return
         if not quantum.isdigit():
-            self.shareView.showErrorMessage("El campo Quantum debe ser un número.")
+            shareView.showErrorMessage("El campo Quantum debe ser un número.")
             return
         if int(quantum) < 0:
-            self.shareView.showErrorMessage("El campo Quantum debe ser mayor a 0.")
+            shareView.showErrorMessage("El campo Quantum debe ser mayor a 0.")
             return
-        self.shareView.drawAnimation(copy.deepcopy(self.processManager.processStates), (int(quantum)))
+        shareView.drawAnimation(copy.deepcopy(self.processManager.processStates), (int(quantum)))
     
     def updateTable(self):
         """
@@ -146,29 +162,43 @@ class TimeshareProcessingController(ISerieProcessingController):
         y que no tenga otros tipos de caracteres, tambien evalua que hallan procesos registrados en processManager, de lo contrario genera avisos usando el metodo 
         showErrorMessage de shareView, luego ejecuta la simulación con runRoundRobin del processManager y actualiza la vista con addTableValues() de shareView
         """
-        quantum = self.shareView.quantumEntry.get()
+        shareView = self.mainView.timeshareProcessingTab
+        quantum = shareView.quantumEntry.get()
         
         if not quantum.strip():
-            self.shareView.showErrorMessage("El campo Quantum no puede estar vacío.")
+            shareView.showErrorMessage("El campo Quantum no puede estar vacío.")
             return
         
         if len(self.processManager.processStates) == 0:
-            self.shareView.showErrorMessage("No hay procesos registrados.")
+            shareView.showErrorMessage("No hay procesos registrados.")
             return  
         
         elif not quantum.isdigit():
-            self.shareView.showErrorMessage("Todos los campos deben contener valores numéricos.")
+            shareView.showErrorMessage("Todos los campos deben contener valores numéricos.")
             return
         
-        self.shareView.cleanRows()
-        self.shareView.addTableValues(self.processManager.runRoundRobin(int(quantum)))
-        self.shareView.cleanInputs()
+        shareView.cleanRows()
+        shareView.addTableValues(self.processManager.runRoundRobin(int(quantum)))
+        shareView.cleanInputs()
     
+    
+    def configureView(self):
+        # Configurar los botones después de que MainView esté inicializado
+        self.mainView.timeshareProcessingTab.addButton.config(command=self.addProcess)
+        self.mainView.timeshareProcessingTab.animate_button.config(command=self.runAnimation)
+        self.mainView.timeshareProcessingTab.updateButton.config(command=self.updateTable)
+
     def run(self):
         """
-        Ejecuta la interfaz de serieView.
+        Inicia la ejecución de la vista principal.
+
+        Args:
+            None
+
+        Returns:
+            None
         """
-        self.shareView.root.mainloop()
+        self.mainView.run()
 
 class BatchProcessingController:
     def __init__(self, mainView=None):
@@ -210,14 +240,14 @@ class BatchProcessingController:
         """
         batchView = self.mainView.batchProcessingTab
         pid = batchView.pid_entry.get()
-        arriveTime = batchView.arriveTimeEntry.get()
+        arrivalTime = batchView.arrivalTimeEntry.get()
         burstTime = batchView.burstTimeEntry.get()
         
         if not pid.strip():
             batchView.showErrorMessage("El campo PID no puede estar vacío.")
             return
         
-        if not arriveTime.strip():
+        if not arrivalTime.strip():
             batchView.showErrorMessage("El campo Arrive Time no puede estar vacío.")
             return
         
@@ -225,7 +255,7 @@ class BatchProcessingController:
             batchView.showErrorMessage("El campo Burst Time no puede estar vacío.")
             return
         
-        if not pid.isdigit() or not arriveTime.isdigit() or not burstTime.isdigit():
+        if not pid.isdigit() or not arrivalTime.isdigit() or not burstTime.isdigit():
             batchView.showErrorMessage("Todos los campos deben contener valores numéricos.")
             return
         
@@ -233,8 +263,8 @@ class BatchProcessingController:
             batchView.showErrorMessage("El PID ya está registrado, digite otro.")
             return
         
-        if arriveTime:
-            self.processManager.addProcess(int(pid), int(arriveTime), int(burstTime))
+        if arrivalTime:
+            self.processManager.addProcess(int(pid), int(arrivalTime), int(burstTime))
             self.processManager.runBatch()
             batchView.cleanRows()
             batchView.addTableValues(self.processManager.processStates)
@@ -271,12 +301,15 @@ if __name__ == "__main__":
     mainView = MainView()
 
     serieController = SerieProcessingController(mainView)
+    timeshareController = TimeshareProcessingController(mainView)
     batchController = BatchProcessingController(mainView)
 
     mainView.configureSerieProcessingTab(serieController)
+    mainView.configureTimeshareProcessingTab(timeshareController)
     mainView.configureBatchProcessingTab(batchController)
 
     serieController.configureView()
+    timeshareController.configureView()
     batchController.configureView()
 
     mainView.run()

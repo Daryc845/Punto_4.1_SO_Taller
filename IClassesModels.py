@@ -78,9 +78,6 @@ class ISerieProcessingController(ABC):
     def runAnimation(self):
         pass
     
-    @abstractmethod
-    def run(self):
-        pass
 
 class IBatchProcessController(ABC):
     @abstractmethod
