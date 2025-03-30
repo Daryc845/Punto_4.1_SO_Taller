@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import ttk, messagebox
+from batchMultiprocessing import BatchMultiProcessingView
 from models import ProcessManager
 from IClassesModels import ISerieProcessingController
 from views import SerieProcessingView, TimeshareProcessingView, MainView
@@ -303,10 +304,12 @@ if __name__ == "__main__":
     serieController = SerieProcessingController(mainView)
     timeshareController = TimeshareProcessingController(mainView)
     batchController = BatchProcessingController(mainView)
+    #simulationFrame = BatchMultiProcessingView(mainView.root)
 
     mainView.configureSerieProcessingTab(serieController)
     mainView.configureTimeshareProcessingTab(timeshareController)
     mainView.configureBatchProcessingTab(batchController)
+    mainView.configureBatchMultiProcessingTab()
 
     serieController.configureView()
     timeshareController.configureView()

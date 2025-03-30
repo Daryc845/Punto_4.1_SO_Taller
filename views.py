@@ -2,6 +2,7 @@ import copy
 import tkinter as tk
 from tkinter import ttk
 from tkinter import ttk, messagebox
+from batchMultiprocessing import BatchMultiProcessingView
 from IClassesModels import ISerieProcessingView, IBatchProcessingView
 from models import ProcessManager
 
@@ -975,6 +976,7 @@ class MainView:
         self.serieProcessingTab = None
         self.timeshareProcessingTab = None
         self.batchProcessingTab = None
+        self.batchMultiProcessingTab = None
 
     def configureSerieProcessingTab(self, serieController):
         """
@@ -1019,7 +1021,22 @@ class MainView:
         self.batchProcessingTab = BatchProcessingView(
             self.notebook, batchController.addProcess, batchController.runAnimation
         )
-        self.notebook.add(self.batchProcessingTab.frame, text="Procesamiento por Lotes")
+        self.notebook.add(self.batchProcessingTab.frame, text="Procesamiento por Lotes/Monoprogramación")
+
+    def configureBatchMultiProcessingTab(self):
+        """
+        Configura la pestaña de procesamiento por lotes.
+
+        Args:
+            batchController (BatchProcessingController): Controlador para el procesamiento por lotes.
+
+        Returns:
+            None
+        """
+        self.batchMultiProcessingTab = BatchMultiProcessingView(
+            self.notebook
+        )
+        self.notebook.add(self.batchMultiProcessingTab.frame, text="Procesamiento por Lotes/Multiprogramación")
 
     def run(self):
         """
